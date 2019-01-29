@@ -57,8 +57,8 @@ CREATE TABLE IF NOT EXISTS `opneFruit`.`user_has_offer` (
   `user_iduser` INT NOT NULL,
   `offerings_idofferings` INT NOT NULL,
   PRIMARY KEY (`user_iduser`, `offerings_idofferings`),
-  INDEX `fk_user_has_offerings_offerings1_idx` (`offerings_idofferings` ASC) VISIBLE,
-  INDEX `fk_user_has_offerings_user_idx` (`user_iduser` ASC) VISIBLE,
+  INDEX `fk_user_has_offerings_offerings1_idx` (`offerings_idofferings` ASC),
+  INDEX `fk_user_has_offerings_user_idx` (`user_iduser` ASC),
   CONSTRAINT `fk_user_has_offerings_user`
     FOREIGN KEY (`user_iduser`)
     REFERENCES `opneFruit`.`user` (`iduser`)
