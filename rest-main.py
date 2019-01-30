@@ -28,7 +28,7 @@ def createOffer():
     response = writeNewOffer(request.json)
     if response == "error":
         return response, status.HTTP_500_INTERNAL_SERVER_ERROR
-    return "{\"status\":\"success\"}", status.HTTP_201_CREATED
+    return "{\"status\":\"success\"}", status.HTTP_201_CREATED, httpHeaders
 
 
 def writeNewOffer(data):
