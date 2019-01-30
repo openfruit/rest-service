@@ -5,7 +5,6 @@ from flask_api import status
 import mysql.connector as mariadb
 from datetime import datetime
 import sys
-import json
 
 app = Flask(__name__)
 httpHeaders = {
@@ -29,6 +28,37 @@ def createOffer():
     if response == "error":
         return "{\"status\":\"error\"}", status.HTTP_500_INTERNAL_SERVER_ERROR, httpHeaders
     return "{\"status\":\"success\"}", status.HTTP_201_CREATED, httpHeaders
+
+
+@app.route("/deleteOffer/<idToDelete>", methods=["DELETE"])
+def deleteOffer(idToDelete):
+    response = deleteOfferFromDB(idToDelete)
+    if response == "error":
+        return "{\"status\":\"error\"}", status.HTTP_500_INTERNAL_SERVER_ERROR, httpHeaders
+    return "{\"status\":\"success\"}", status.HTTP_200_OK, httpHeaders
+
+
+def deleteOfferFromDB(idToDelete):
+    try:
+        connection = getDBConnection()
+        cursor = connection.cursor()
+        cursor.execute(
+            "SET @user=(SELECT user_has_offer.user_iduser FROM user_has_offer WHERE offerings_idofferings={});"
+            .format(idToDelete))
+        cursor.execute(
+            "DELETE FROM user_has_offer WHERE offerings_idofferings={};".
+            format(idToDelete))
+        cursor.execute("DELETE FROM `user` WHERE iduser=@user;")
+        cursor.execute(
+            "DELETE FROM offer WHERE idoffer={};".format(idToDelete))
+        connection.commit()
+        connection.close()
+        return "success"
+    except mariadb.Error as error:
+        print("Error: {}".format(error))
+    except:
+        print("Error:", sys.exc_info()[0])
+        return "error"
 
 
 def writeNewOffer(data):
