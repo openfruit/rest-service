@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from flask import Flask, request, Response
 from flask_api import status
 import mysql.connector as mariadb
