@@ -8,68 +8,92 @@ import sys
 import json
 
 app = Flask(__name__)
+httpHeaders = {
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "OPTIONS,POST,GET,PUT,DELETE",
+}
 
 
-@app.route("/getAllOffers", methods=['GET'])
+@app.route("/getAllOffers", methods=["GET"])
 def getAllOffers():
     data = fetchAllOffers()
-    if(data == 'error'):
-        return "{\"status\":\"error\"}", status.HTTP_500_INTERNAL_SERVER_ERROR
-    return jsonifyOffers(data),  {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'OPTIONS,POST,GET,PUT,DELETE'}
+    if data == "error":
+        return '{"status":"error"}', status.HTTP_500_INTERNAL_SERVER_ERROR
+    return (jsonifyOffers(data), httpHeaders)
 
 
-@app.route('/createOffer', methods=['POST'])
+@app.route("/createOffer", methods=["PUT"])
 def createOffer():
     response = writeNewOffer(request.json)
-    if(response == 'error'):
+    if response == "error":
         return response, status.HTTP_500_INTERNAL_SERVER_ERROR
-    return status.HTTP_501_NOT_IMPLEMENTED
+    return "{\"status\":\"success\"}", status.HTTP_201_CREATED
 
 
 def writeNewOffer(data):
     try:
-        mariadb_connection = mariadb.connect(
-            host='159.69.220.111', user='fabian', password='6FXxwBwhVnTyFgndeM4bVFY2aQ2YWGChmVyxt6u8tNmX5uE8rWQDTu39jQB8mqjr', database='openFruit')
-        cursor = mariadb_connection.cursor()
-        cursor.execute('INSERT INTO openFruit.offer (weight, amount, product, date_time_of_entry) VALUES(' +
-                       data['weight']+', '+data['amount'] + ', ' + data['product']+', NOW());')
-        cursor.execute('INSERT INTO openFruit.user_has_offer (user_iduser, offerings_idofferings) VALUES(' +
-                       data['iduser']+', LAST_INSERT_ID());')
-        data = cursor.fetchall()
-        mariadb_connection.close()
-        return data
+        connection = getDBConnection()
+        cursor = connection.cursor()
+        cursor.execute("INSERT INTO openFruit.`user` (firstname, lastname, longitude, latitude) VALUES('"+data["firstname"]+"', '"+data["lastname"]+"', "+str(data["longitude"])+", "+str(data["latitude"])+");")
+        cursor.execute("SET @user=LAST_INSERT_ID();")
+        cursor.execute(
+            "INSERT INTO openFruit.offer (weight, amount, product, date_time_of_entry) VALUES(" + str(data["weight"]) + ", " + str(data["amount"]) + ", '" + data["product"] + "', NOW());")
+        cursor.execute(
+            "INSERT INTO openFruit.user_has_offer (user_iduser, offerings_idofferings) VALUES(@user, LAST_INSERT_ID());")
+        connection.commit()
+        connection.close()
+        return "success"
     except mariadb.Error as error:
         print("Error: {}".format(error))
     except:
         print("Error:", sys.exc_info()[0])
-        return 'error'
-    return ''
+        return "error"
 
 
 def jsonifyOffers(listOfOffers):
-    response = '{\"offers\":['
+    response = '{"offers":['
     for i in range(0, len(listOfOffers)):
-        response += '{\"id\":'+str(listOfOffers[i][0])+', \"product\":\"'+listOfOffers[i][1]+'\",\"weight\":\"'+str(
-            listOfOffers[i][2])+'\", \"amount\":'+str(listOfOffers[i][3])+', \"dateTimeOfEntry\":\"'+str(listOfOffers[i][4])+'\", \"idUser\":'+str(listOfOffers[i][5])+', \"firstname\":\"'+str(listOfOffers[i][6])+'\", \"lastname\":\"'+str(listOfOffers[i][7])+'\", \"longitude\":'+str(listOfOffers[i][8])+', \"latitude\":'+str(listOfOffers[i][9])+'},'
-    response = response[:-1] + ']}'
+        response += (
+            '{"id":' + str(listOfOffers[i][0]) + ', "product":"' +
+            listOfOffers[i][1] + '","weight":"' + str(listOfOffers[i][2]) +
+            '", "amount":' + str(listOfOffers[i][3]) + ', "dateTimeOfEntry":"'
+            + str(listOfOffers[i][4]) + '", "idUser":' + str(
+                listOfOffers[i][5]) + ', "firstname":"' + listOfOffers[i][6] +
+            '", "lastname":"' + listOfOffers[i][7] + '", "longitude":' + str(
+                listOfOffers[i][8]) + ', "latitude":' + str(
+                    listOfOffers[i][9]) + "},")
+    response = response[:-1] + "]}"
     return response
 
 
 def fetchAllOffers():
     try:
-        mariadb_connection = mariadb.connect(
-            host='159.69.220.111', user='fabian', password='6FXxwBwhVnTyFgndeM4bVFY2aQ2YWGChmVyxt6u8tNmX5uE8rWQDTu39jQB8mqjr', database='openFruit')
-        cursor = mariadb_connection.cursor()
-        cursor.execute('SELECT idoffer, product, weight, amount, date_time_of_entry, iduser, firstname, lastname, longitude, latitude FROM offer o INNER JOIN user_has_offer uho ON o.idoffer=uho.offerings_idofferings INNER JOIN user u ON uho.user_iduser=u.idUser;')
+        connection = getDBConnection()
+        cursor = connection.cursor()
+        cursor.execute(
+            "SELECT idoffer, product, weight, amount, date_time_of_entry, iduser, firstname, lastname, longitude, latitude FROM offer o INNER JOIN user_has_offer uho ON o.idoffer=uho.offerings_idofferings INNER JOIN user u ON uho.user_iduser=u.idUser;"
+        )
         data = cursor.fetchall()
-        mariadb_connection.close()
+        connection.close()
         return data
     except mariadb.Error as error:
         print("Error: {}".format(error))
     except:
         print("Error:", sys.exc_info()[0])
-        return 'error'
+        return "error"
+
+
+def getDBConnection():
+    mariadb_connection = mariadb.connect(
+        host="159.69.220.111",
+        user="fabian",
+        password=
+        "6FXxwBwhVnTyFgndeM4bVFY2aQ2YWGChmVyxt6u8tNmX5uE8rWQDTu39jQB8mqjr",
+        database="openFruit",
+    )
+    return mariadb_connection
 
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=80, threaded=True)
+    app.run(host="0.0.0.0", port=80, threaded=True)
