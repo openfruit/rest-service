@@ -27,6 +27,22 @@ def createOffer():
 
 
 def writeNewOffer(data):
+    try:
+        mariadb_connection = mariadb.connect(
+            host='159.69.220.111', user='fabian', password='6FXxwBwhVnTyFgndeM4bVFY2aQ2YWGChmVyxt6u8tNmX5uE8rWQDTu39jQB8mqjr', database='openFruit')
+        cursor = mariadb_connection.cursor()
+        cursor.execute('INSERT INTO openFruit.offer (weight, amount, product, date_time_of_entry) VALUES(' +
+                       data['weight']+', '+data['amount'] + ', ' + data['product']+', NOW());')
+        cursor.execute('INSERT INTO openFruit.user_has_offer (user_iduser, offerings_idofferings) VALUES(' +
+                       data['iduser']+', LAST_INSERT_ID());')
+        data = cursor.fetchall()
+        mariadb_connection.close()
+        return data
+    except mariadb.Error as error:
+        print("Error: {}".format(error))
+    except:
+        print("Error:", sys.exc_info()[0])
+        return 'error'
     return ''
 
 
