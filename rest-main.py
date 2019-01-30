@@ -19,7 +19,7 @@ httpHeaders = {
 def getAllOffers():
     data = fetchAllOffers()
     if data == "error":
-        return '{"status":"error"}', status.HTTP_500_INTERNAL_SERVER_ERROR
+        return '{"status":"error"}', status.HTTP_500_INTERNAL_SERVER_ERROR, httpHeaders
     return (jsonifyOffers(data), httpHeaders)
 
 
@@ -27,7 +27,7 @@ def getAllOffers():
 def createOffer():
     response = writeNewOffer(request.json)
     if response == "error":
-        return response, status.HTTP_500_INTERNAL_SERVER_ERROR
+        return "{\"status\":\"error\"}", status.HTTP_500_INTERNAL_SERVER_ERROR, httpHeaders
     return "{\"status\":\"success\"}", status.HTTP_201_CREATED, httpHeaders
 
 
@@ -35,12 +35,18 @@ def writeNewOffer(data):
     try:
         connection = getDBConnection()
         cursor = connection.cursor()
-        cursor.execute("INSERT INTO openFruit.`user` (firstname, lastname, longitude, latitude) VALUES('"+data["firstname"]+"', '"+data["lastname"]+"', "+str(data["longitude"])+", "+str(data["latitude"])+");")
+        cursor.execute(
+            "INSERT INTO openFruit.`user` (firstname, lastname, longitude, latitude) VALUES('"
+            + data["firstname"] + "', '" + data["lastname"] + "', " +
+            str(data["longitude"]) + ", " + str(data["latitude"]) + ");")
         cursor.execute("SET @user=LAST_INSERT_ID();")
         cursor.execute(
-            "INSERT INTO openFruit.offer (weight, amount, product, date_time_of_entry) VALUES(" + str(data["weight"]) + ", " + str(data["amount"]) + ", '" + data["product"] + "', NOW());")
+            "INSERT INTO openFruit.offer (weight, amount, product, date_time_of_entry) VALUES("
+            + str(data["weight"]) + ", " + str(data["amount"]) + ", '" +
+            data["product"] + "', NOW());")
         cursor.execute(
-            "INSERT INTO openFruit.user_has_offer (user_iduser, offerings_idofferings) VALUES(@user, LAST_INSERT_ID());")
+            "INSERT INTO openFruit.user_has_offer (user_iduser, offerings_idofferings) VALUES(@user, LAST_INSERT_ID());"
+        )
         connection.commit()
         connection.close()
         return "success"
