@@ -43,10 +43,10 @@ def deleteOfferFromDB(idToDelete):
         connection = getDBConnection()
         cursor = connection.cursor()
         cursor.execute(
-            "SET @user=(SELECT user_has_offer.user_iduser FROM user_has_offer WHERE offerings_idofferings={});"
+            "SET @user=(SELECT offer_has_user.user_iduser FROM offer_has_user WHERE offer_idoffer={});"
             .format(idToDelete))
         cursor.execute(
-            "DELETE FROM user_has_offer WHERE offerings_idofferings={};".
+            "DELETE FROM offer_has_user WHERE offer_idoffer={};".
             format(idToDelete))
         cursor.execute("DELETE FROM `user` WHERE iduser=@user;")
         cursor.execute(
@@ -71,11 +71,11 @@ def writeNewOffer(data):
             str(data["longitude"]) + ", " + str(data["latitude"]) + ");")
         cursor.execute("SET @user=LAST_INSERT_ID();")
         cursor.execute(
-            "INSERT INTO openFruit.offer (weight, amount, product, date_time_of_entry) VALUES("
-            + str(data["weight"]) + ", " + str(data["amount"]) + ", '" +
+            "INSERT INTO openFruit.offer (unit, amount, product, date_time_of_entry) VALUES('"
+            + str(data["unit"]) + "', " + str(data["amount"]) + ", '" +
             data["product"] + "', NOW());")
         cursor.execute(
-            "INSERT INTO openFruit.user_has_offer (user_iduser, offerings_idofferings) VALUES(@user, LAST_INSERT_ID());"
+            "INSERT INTO openFruit.offer_has_user (user_iduser, offer_idoffer) VALUES(@user, LAST_INSERT_ID());"
         )
         connection.commit()
         connection.close()
@@ -92,14 +92,16 @@ def jsonifyOffers(listOfOffers):
     for i in range(0, len(listOfOffers)):
         response += (
             '{"id":' + str(listOfOffers[i][0]) + ', "product":"' +
-            listOfOffers[i][1] + '","weight":"' + str(listOfOffers[i][2]) +
+            listOfOffers[i][1] + '","unit":"' + str(listOfOffers[i][2]) +
             '", "amount":' + str(listOfOffers[i][3]) + ', "dateTimeOfEntry":"'
             + str(listOfOffers[i][4]) + '", "idUser":' + str(
                 listOfOffers[i][5]) + ', "firstname":"' + listOfOffers[i][6] +
             '", "lastname":"' + listOfOffers[i][7] + '", "longitude":' + str(
                 listOfOffers[i][8]) + ', "latitude":' + str(
                     listOfOffers[i][9]) + "},")
-    response = response[:-1] + "]}"
+    if (response != '{"offers":['):
+        response = response[:-1]
+    response += "]}"
     return response
 
 
@@ -108,7 +110,7 @@ def fetchAllOffers():
         connection = getDBConnection()
         cursor = connection.cursor()
         cursor.execute(
-            "SELECT idoffer, product, weight, amount, date_time_of_entry, iduser, firstname, lastname, longitude, latitude FROM offer o INNER JOIN user_has_offer uho ON o.idoffer=uho.offerings_idofferings INNER JOIN user u ON uho.user_iduser=u.idUser;"
+            "SELECT idoffer, product, unit, amount, date_time_of_entry, iduser, firstname, lastname, longitude, latitude FROM offer o INNER JOIN offer_has_user uho ON o.idoffer=uho.offer_idoffer INNER JOIN user u ON uho.user_iduser=u.idUser;"
         )
         data = cursor.fetchall()
         connection.close()
