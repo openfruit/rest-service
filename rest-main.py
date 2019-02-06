@@ -79,9 +79,9 @@ def writeNewOffer(data):
             str(data["longitude"]) + ", " + str(data["latitude"]) + ");")
         cursor.execute("SET @user=LAST_INSERT_ID();")
         cursor.execute(
-            "INSERT INTO openFruit.offer (unit, amount, product, date_time_of_entry) VALUES('"
+            "INSERT INTO openFruit.offer (unit, amount, product, deviceID, date_time_of_entry) VALUES('"
             + str(data["unit"]) + "', " + str(data["amount"]) + ", '" +
-            data["product"] + "', NOW());")
+            data["product"] + "', '"+data["deviceID"]+"', NOW());")
         cursor.execute(
             "INSERT INTO openFruit.offer_has_user (user_iduser, offer_idoffer) VALUES(@user, LAST_INSERT_ID());"
         )
@@ -90,6 +90,7 @@ def writeNewOffer(data):
         return "success"
     except mariadb.Error as error:
         print("Error: {}".format(error))
+        return "error"
     except:
         print("Error:", sys.exc_info()[0])
         return "error"
