@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS `openFruit`.`offer` (
   `product` VARCHAR(255) NOT NULL,
   `date_time_of_entry` DATETIME NOT NULL,
   `unit` VARCHAR(32) NOT NULL,
+  `deviceID` VARCHAR(64) NOT NULL,
   PRIMARY KEY (`idoffer`))
 ENGINE = InnoDB;
 
