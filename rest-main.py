@@ -38,13 +38,34 @@ def createOffer():
     return "{\"status\":\"success\"}", status.HTTP_201_CREATED, httpHeaders
 
 
-@app.route("/deleteOffer/<idToDelete>", methods=["DELETE"])
-def deleteOffer(idToDelete):
-    response = deleteOfferFromDB(idToDelete)
+@app.route("/deleteOffer/<idToDelete>/<deviceID>", methods=["DELETE"])
+def deleteOffer(idToDelete, deviceID):
+    if(checkDevicePermissionBeforeDelete(idToDelete,deviceID)):
+        response = deleteOfferFromDB(idToDelete)
+    else:
+        response = "error: no permission"
     if response == "error":
         return "{\"status\":\"error\"}", status.HTTP_500_INTERNAL_SERVER_ERROR, httpHeaders
+    if response == "error: no permission":
+        return "{\"status\":\"error - no permission to delete\"}", status.HTTP_401_UNAUTHORIZED, httpHeaders
     return "{\"status\":\"success\"}", status.HTTP_200_OK, httpHeaders
 
+
+def checkDevicePermissionBeforeDelete(idToDelete, deviceID):
+    connection = getDBConnection()
+    cursor = connection.cursor()
+    cursor.execute(
+        "SELECT idoffer, product, unit, amount, date_time_of_entry, iduser, firstname, lastname, longitude, latitude FROM offer o INNER JOIN offer_has_user uho ON o.idoffer=uho.offer_idoffer INNER JOIN user u ON uho.user_iduser=u.idUser WHERE deviceID='"+deviceID+"';"
+    )
+    data = cursor.fetchall()
+    print(data)
+    connection.close()
+    for i in range(0, len(data)):
+        print(data[i][0])
+        print(idToDelete)
+        if(str(data[i][0])==str(idToDelete)): #idk why only strings work
+            return True
+    return False
 
 def deleteOfferFromDB(idToDelete):
     try:
