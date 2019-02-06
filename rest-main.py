@@ -14,12 +14,20 @@ httpHeaders = {
 }
 
 
-@app.route("/getAllOffers", methods=["GET"])
-def getAllOffers():
-    data = fetchAllOffers()
+@app.route("/getAllOffers/<deviceID>", methods=["GET"])
+def getAllOffers(deviceID):
+    data = fetchAllOffers(deviceID)
     if data == "error":
         return '{"status":"error"}', status.HTTP_500_INTERNAL_SERVER_ERROR, httpHeaders
     return (jsonifyOffers(data), httpHeaders)
+
+@app.route("/getOwnOffers/<deviceID>", methods=["GET"])
+def getOwnOffers(deviceID):
+    data = fetchOwnOffers(deviceID)
+    if data == "error":
+        return '{"status":"error"}', status.HTTP_500_INTERNAL_SERVER_ERROR, httpHeaders
+    return (jsonifyOffers(data), httpHeaders)
+
 
 
 @app.route("/createOffer", methods=["PUT"])
@@ -105,12 +113,29 @@ def jsonifyOffers(listOfOffers):
     return response
 
 
-def fetchAllOffers():
+def fetchAllOffers(deviceID):
     try:
         connection = getDBConnection()
         cursor = connection.cursor()
         cursor.execute(
-            "SELECT idoffer, product, unit, amount, date_time_of_entry, iduser, firstname, lastname, longitude, latitude FROM offer o INNER JOIN offer_has_user uho ON o.idoffer=uho.offer_idoffer INNER JOIN user u ON uho.user_iduser=u.idUser;"
+            "SELECT idoffer, product, unit, amount, date_time_of_entry, iduser, firstname, lastname, longitude, latitude FROM offer o INNER JOIN offer_has_user uho ON o.idoffer=uho.offer_idoffer INNER JOIN user u ON uho.user_iduser=u.idUser WHERE deviceID!='"+deviceID+"';"
+        )
+        data = cursor.fetchall()
+        connection.close()
+        return data
+    except mariadb.Error as error:
+        print("Error: {}".format(error))
+    except:
+        print("Error:", sys.exc_info()[0])
+        return "error"
+
+
+def fetchOwnOffers(deviceID):
+    try:
+        connection = getDBConnection()
+        cursor = connection.cursor()
+        cursor.execute(
+            "SELECT idoffer, product, unit, amount, date_time_of_entry, iduser, firstname, lastname, longitude, latitude FROM offer o INNER JOIN offer_has_user uho ON o.idoffer=uho.offer_idoffer INNER JOIN user u ON uho.user_iduser=u.idUser WHERE deviceID='"+deviceID+"';"
         )
         data = cursor.fetchall()
         connection.close()
@@ -126,8 +151,7 @@ def getDBConnection():
     mariadb_connection = mariadb.connect(
         host="159.69.220.111",
         user="fabian",
-        password=
-        "6FXxwBwhVnTyFgndeM4bVFY2aQ2YWGChmVyxt6u8tNmX5uE8rWQDTu39jQB8mqjr",
+        password="6FXxwBwhVnTyFgndeM4bVFY2aQ2YWGChmVyxt6u8tNmX5uE8rWQDTu39jQB8mqjr",
         database="openFruit",
     )
     return mariadb_connection
