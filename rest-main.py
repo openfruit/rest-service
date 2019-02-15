@@ -6,6 +6,7 @@ import mysql.connector as mariadb
 from datetime import datetime
 import sys
 import json
+import platform
 
 app = Flask(__name__)
 httpHeaders = {
@@ -13,7 +14,10 @@ httpHeaders = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "OPTIONS,POST,GET,PUT,DELETE",
 }
-configFile = json.load(open("dbconfig.json", "r"))
+if(platform.system()=='Linux'):
+    configFile = json.load(open("/etc/openfruit/dbconfig.json", "r"))
+else:
+    configFile = json.load(open("dbconfig.json", "r"))
 
 
 @app.route("/getAllOffers/<deviceID>", methods=["GET"])
