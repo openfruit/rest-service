@@ -5,6 +5,7 @@ from flask_api import status
 import mysql.connector as mariadb
 from datetime import datetime
 import sys
+import json
 
 app = Flask(__name__)
 httpHeaders = {
@@ -12,6 +13,7 @@ httpHeaders = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "OPTIONS,POST,GET,PUT,DELETE",
 }
+configFile = json.load(open("dbconfig.json", "r"))
 
 
 @app.route("/getAllOffers/<deviceID>", methods=["GET"])
@@ -171,10 +173,10 @@ def fetchOwnOffers(deviceID):
 
 def getDBConnection():
     mariadb_connection = mariadb.connect(
-        host="159.69.220.111",
-        user="fabian",
-        password="6FXxwBwhVnTyFgndeM4bVFY2aQ2YWGChmVyxt6u8tNmX5uE8rWQDTu39jQB8mqjr",
-        database="openFruit",
+        host=configFile['host'],
+        user=configFile['user'],
+        password=configFile['password'],
+        database=configFile['database'],
     )
     return mariadb_connection
 
