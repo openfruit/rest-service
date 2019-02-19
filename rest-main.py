@@ -189,8 +189,8 @@ def getDBConnection():
 if __name__ == "__main__":
     if(platform.system()=='Linux'):
         context = SSL.Context(SSL.SSLv23_METHOD)
-        context.use_privatekey_file('/etc/letsencrypt/live/openfruit.info/cert.pem')
-        context.use_certificate_file('/etc/letsencrypt/live/openfruit.info/privkey.pem')
+        context.use_privatekey_file('/etc/letsencrypt/live/openfruit.info/privkey.pem')
+        context.use_certificate_file('/etc/letsencrypt/live/openfruit.info/cert.pem')
         app.run(host="0.0.0.0", port=8000, threaded=True, ssl_context=context)
     else:
         app.run(host="0.0.0.0", port=8000, threaded=True)
